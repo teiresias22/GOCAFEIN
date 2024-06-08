@@ -5,17 +5,15 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:gocafein_test/model/models.dart';
 
-class MovieNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
-  MovieNotifier() : super(const AsyncValue.data(null));
+class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
+  MovieListNotifier() : super(const AsyncValue.data(null));
 
-  Future<void> fetchMovies(String keyword) async {
+  Future<void> fetchMovies(String keyword, int page) async {
     state = const AsyncValue.loading();
-
-    final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&s=$keyword&type=movie';
-
+    final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&s=$keyword&page=$page&type=movie';
+    print(url);
     try {
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final movieResponse = MovieResponse.fromJson(data);
@@ -27,11 +25,20 @@ class MovieNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
       state = AsyncValue.error('An error occurred: $error', StackTrace.current);
     }
   }
+}
+
+final movieProvider = StateNotifierProvider<MovieListNotifier, AsyncValue<List<MovieModel>?>>((ref) {
+  return MovieListNotifier();
+});
+
+class MovieDetailNotifier extends StateNotifier<AsyncValue<MovieModel?>> {
+  MovieDetailNotifier() : super(const AsyncValue.data(null));
 
   Future<void> fetchMovieDetail(String imdbID) async {
     state = const AsyncValue.loading();
 
     final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&i=$imdbID';
+    print(url);
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -39,7 +46,8 @@ class MovieNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final movieDetail = MovieModel.fromJson(data);
-        state = AsyncValue.data([movieDetail]);
+        print(movieDetail);
+        state = AsyncValue.data(movieDetail);
       } else {
         state = AsyncValue.error('Failed to load movie detail', StackTrace.current);
       }
@@ -49,8 +57,8 @@ class MovieNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
   }
 }
 
-final movieProvider = StateNotifierProvider<MovieNotifier, AsyncValue<List<MovieModel>?>>((ref) {
-  return MovieNotifier();
+final movieDetailProvider = StateNotifierProvider<MovieDetailNotifier, AsyncValue<MovieModel?>>((ref) {
+  return MovieDetailNotifier();
 });
 
 @immutable

@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:gocafein_test/provider/provider.dart';
 import 'package:gocafein_test/model/models.dart';
+import 'package:gocafein_test/screen/movie_detail.screen.dart';
 
-class MovieItem extends HookWidget {
+class MovieItem extends ConsumerWidget {
   final MovieModel movieModel;
   const MovieItem(this.movieModel, {super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
 
-    return Container(
-      height: 120,
-      width: double.infinity,
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: GestureDetector(
-        onTap: () {
-          print(movieModel.imdbID);
-        },
+    return GestureDetector(
+      onTap: () async {
+        ref.read(movieDetailProvider.notifier).fetchMovieDetail(movieModel.imdbID ?? '');
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieDetailScreen(movieModel.Title ?? ''),
+          ),
+        );
+      },
+      child: Container(
+        height: 120,
+        width: double.infinity,
+        padding: const EdgeInsets.all(8),
+        margin: const EdgeInsets.only(bottom: 8),
         child: Row(
           children: [
             ClipRRect(
