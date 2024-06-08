@@ -14,7 +14,7 @@ class HomeScreen extends HookConsumerWidget {
     final keywordController = useTextEditingController(text: 'star');
 
     useEffect(() {
-      Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies('star'));
+      Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies(keywordController.text, 1));
       return null;
     }, [keywordController]);
 
@@ -51,7 +51,7 @@ class HomeScreen extends HookConsumerWidget {
                     width: 80,
                     child: OutlinedButton(
                       onPressed: () async {
-                        ref.read(movieProvider.notifier).fetchMovies(keywordController.text);
+                        ref.read(movieProvider.notifier).fetchMovies(keywordController.text, 1);
                       },
                       style: Theme.of(context).outlinedButtonTheme.style,
                       child: Text(

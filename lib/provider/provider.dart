@@ -17,6 +17,7 @@ class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final movieResponse = MovieResponse.fromJson(data);
+        print(movieResponse);
         state = AsyncValue.data(movieResponse.Search);
       } else {
         state = AsyncValue.error('Failed to load movies', StackTrace.current);

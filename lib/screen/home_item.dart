@@ -19,7 +19,7 @@ class MovieItem extends ConsumerWidget {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MovieDetailScreen(movieModel.Title ?? ''),
+            builder: (context) => MovieDetailScreen(movieModel),
           ),
         );
       },
@@ -50,12 +50,13 @@ class MovieItem extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
                         movieModel.Type ?? '',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         movieModel.Year ?? '',
                         style: Theme.of(context).textTheme.bodyMedium,
