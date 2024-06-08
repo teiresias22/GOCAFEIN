@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:gocafein_test/provider/provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:gocafein_test/provider/provider.dart';
 import 'package:gocafein_test/screen/home_item.dart';
 
 class HomeScreen extends HookConsumerWidget {
@@ -12,26 +12,11 @@ class HomeScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final keywordController = useTextEditingController(text: 'star');
-    final scrollController = useScrollController();
-    var pageIndex = useState(1);
 
     useEffect(() {
-      Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies(keywordController.text, pageIndex.value));
-      scrollController.addListener(() {
-        bool isScrolling = scrollController.position.isScrollingNotifier.value;
-        if (isScrolling) {
-          FocusScope.of(context).unfocus();
-        }
-
-        bool atBottom = scrollController.position.pixels == scrollController.position.maxScrollExtent;
-        if (atBottom) {
-          print('At bottom: $atBottom ${pageIndex.value}');
-          Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies(keywordController.text, pageIndex.value));
-          pageIndex.value = pageIndex.value+1;
-        }
-      });
-      return () => scrollController.removeListener(() {});
-    }, [scrollController]);
+      Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies('star'));
+      return null;
+    }, [keywordController]);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,11 +26,10 @@ class HomeScreen extends HookConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
-        controller: scrollController,
         scrollDirection: Axis.vertical,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
+          child:Column(
             children: [
               Row(
                 children: [
@@ -57,6 +41,9 @@ class HomeScreen extends HookConsumerWidget {
                       ),
                       keyboardType: TextInputType.text,
                       style: const TextStyle(fontSize: 16),
+                      onChanged: (text) {
+                        keywordController.text = text;
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -64,8 +51,7 @@ class HomeScreen extends HookConsumerWidget {
                     width: 80,
                     child: OutlinedButton(
                       onPressed: () async {
-                        pageIndex.value = 0;
-                        ref.read(movieProvider.notifier).fetchMovies(keywordController.text, pageIndex.value);
+                        ref.read(movieProvider.notifier).fetchMovies(keywordController.text);
                       },
                       style: Theme.of(context).outlinedButtonTheme.style,
                       child: Text(
@@ -86,7 +72,7 @@ class HomeScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _listBuild (BuildContext context, WidgetRef ref) {
+  Widget _listBuild(BuildContext context, WidgetRef ref) {
     final movieState = ref.watch(movieProvider);
 
     return movieState.when(
