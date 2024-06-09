@@ -166,7 +166,9 @@ class MovieDetailScreen extends HookConsumerWidget {
         const SizedBox(height: 8),
         Text(
           dailyItem?.Awards ?? '',
-          style: Theme.of(context).textTheme.bodyMedium,
+          maxLines: 2,
+          style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: Theme.of(context).primaryColor),
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 16),
       ],

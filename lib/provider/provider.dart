@@ -9,16 +9,29 @@ class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
   MovieListNotifier() : super(const AsyncValue.data(null));
 
   Future<void> fetchMovies(String keyword, int page) async {
-    state = const AsyncValue.loading();
+    final currentState = state;
+    final currentMovies = currentState.value ?? [];
+
+    if (page == 1) {
+      state = const AsyncValue.loading();
+    } else {
+      state = AsyncValue.data(currentMovies);
+    }
+
     final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&s=$keyword&page=$page&type=movie';
-    print(url);
+
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final movieResponse = MovieResponse.fromJson(data);
-        print(movieResponse);
-        state = AsyncValue.data(movieResponse.Search);
+
+        final updatedMovies = List<MovieModel>.from(currentMovies)
+          ..addAll(movieResponse.Search);
+
+        print('updatedMovies ${updatedMovies.length}');
+
+        state = AsyncValue.data(updatedMovies);
       } else {
         state = AsyncValue.error('Failed to load movies', StackTrace.current);
       }

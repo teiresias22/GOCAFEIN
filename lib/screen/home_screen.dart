@@ -12,11 +12,33 @@ class HomeScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final keywordController = useTextEditingController(text: 'star');
+    final scrollController = useScrollController();
+    var pageIndex = useState(1);
+    final movieState = ref.watch(movieProvider);
+
+    Future<void> requestData() async {
+      Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies(keywordController.text, pageIndex.value));
+      pageIndex.value = pageIndex.value+1;
+    }
 
     useEffect(() {
-      Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies(keywordController.text, 1));
-      return null;
-    }, [keywordController]);
+      requestData();
+      scrollController.addListener(() {
+        //스크롤 여부를 판단하여, 스크롤 시작하면 키보드를 내림
+        bool isScrolling = scrollController.position.isScrollingNotifier.value;
+        if (isScrolling) {
+          FocusScope.of(context).unfocus();
+        }
+
+        bool atBottom = scrollController.position.pixels == scrollController.position.maxScrollExtent;
+        if (atBottom) {
+          requestData();
+        }
+      });
+      return () {
+        scrollController.removeListener(() {});
+      };
+    }, [scrollController]);
 
     return Scaffold(
       appBar: AppBar(
@@ -26,6 +48,7 @@ class HomeScreen extends HookConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
+        controller: scrollController,
         scrollDirection: Axis.vertical,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -64,32 +87,29 @@ class HomeScreen extends HookConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              _listBuild(context, ref),
+              movieState.when(
+                data: (movies) => RefreshIndicator(
+                  onRefresh: requestData,
+                  child: ListView.builder(
+                    primary: false,
+                    shrinkWrap: true,
+                    scrollDirection: Axis.vertical,
+                    itemCount: movies?.length,
+                    itemBuilder: (context, index) {
+                      return MovieItem(movies![index]);
+                    },
+                  ),
+                ),
+                error: (e, s) => const Center(
+                  child: Text('로딩 중 에러가 발생했습니다'),
+                ),
+                loading: () => const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _listBuild(BuildContext context, WidgetRef ref) {
-    final movieState = ref.watch(movieProvider);
-
-    return movieState.when(
-      data: (movies) => ListView.builder(
-        primary: false,
-        shrinkWrap: true,
-        scrollDirection: Axis.vertical,
-        itemCount: movies?.length,
-        itemBuilder: (context, index) {
-          return MovieItem(movies![index]);
-        },
-      ),
-      error: (e, s) => const Center(
-        child: Text('로딩 중 에러가 발생했습니다'),
-      ),
-      loading: () => const Center(
-        child: CircularProgressIndicator.adaptive(),
       ),
     );
   }
