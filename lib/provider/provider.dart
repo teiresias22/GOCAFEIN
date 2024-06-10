@@ -5,71 +5,75 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:gocafein_test/model/models.dart';
 
-//영화의 목록을 검색하고 저장합니다.
-class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
-  MovieListNotifier() : super(const AsyncValue.data(null));
+class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>>> {
+  MovieListNotifier() : super(const AsyncValue.data([]));
 
   Future<void> fetchMovies(String keyword, int page) async {
-    final currentState = state;
-    final currentMovies = currentState.value ?? [];
-    state = AsyncValue.data(currentMovies);
-
     final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&s=$keyword&page=$page&type=movie';
 
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final movieResponse = MovieResponse.fromJson(data);
-        if (page == 1) {
-          state = AsyncValue.data(movieResponse.Search);
-        } else {
-          final updatedMovies = List<MovieModel>.from(currentMovies)
-            ..addAll(movieResponse.Search);
-          print('updatedMovies ${updatedMovies.length}');
-          state = AsyncValue.data(updatedMovies);
-        }
-
+        _handleSuccess(response.body, page);
       } else {
-        state = AsyncValue.error('Failed to load movies', StackTrace.current);
+        _handleError('Failed to load movies');
       }
     } catch (error) {
-      state = AsyncValue.error('An error occurred: $error', StackTrace.current);
+      _handleError('An error occurred: $error');
     }
   }
-}
 
+  void _handleSuccess(String responseBody, int page) {
+    final data = json.decode(responseBody);
+    final movieResponse = MovieResponse.fromJson(data);
+
+    if (page == 1) {
+      state = AsyncValue.data(movieResponse.Search);
+    } else {
+      final currentMovies = state.value ?? [];
+      final updatedMovies = List<MovieModel>.from(currentMovies)
+        ..addAll(movieResponse.Search);
+      state = AsyncValue.data(updatedMovies);
+    }
+  }
+
+  void _handleError(String message) {
+    state = AsyncValue.error(message, StackTrace.current);
+  }
+}
 final movieProvider = StateNotifierProvider<MovieListNotifier, AsyncValue<List<MovieModel>?>>((ref) {
   return MovieListNotifier();
 });
 
-//영화의 상세 정보를 검색하고 저장합니다.
 class MovieDetailNotifier extends StateNotifier<AsyncValue<MovieModel?>> {
   MovieDetailNotifier() : super(const AsyncValue.data(null));
 
   Future<void> fetchMovieDetail(String imdbID) async {
     state = const AsyncValue.loading();
-
     final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&i=$imdbID';
-    print(url);
 
     try {
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final movieDetail = MovieModel.fromJson(data);
-        print(movieDetail);
-        state = AsyncValue.data(movieDetail);
+        _handleSuccess(response.body);
       } else {
-        state = AsyncValue.error('Failed to load movie detail', StackTrace.current);
+        _handleError('Failed to load movie detail');
       }
     } catch (error) {
-      state = AsyncValue.error('An error occurred: $error', StackTrace.current);
+      _handleError('An error occurred: $error');
     }
   }
-}
 
+  void _handleSuccess(String responseBody) {
+    final data = json.decode(responseBody);
+    final movieDetail = MovieModel.fromJson(data);
+    state = AsyncValue.data(movieDetail);
+  }
+
+  void _handleError(String message) {
+    state = AsyncValue.error(message, StackTrace.current);
+  }
+}
 final movieDetailProvider = StateNotifierProvider<MovieDetailNotifier, AsyncValue<MovieModel?>>((ref) {
   return MovieDetailNotifier();
 });

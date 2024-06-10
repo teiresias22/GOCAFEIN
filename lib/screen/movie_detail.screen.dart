@@ -6,6 +6,7 @@ import 'package:gocafein_test/widget/detail_awards_build.dart';
 import 'package:gocafein_test/widget/detail_plot_build.dart';
 import 'package:gocafein_test/widget/detail_rating_build.dart';
 import 'package:gocafein_test/widget/detail_grid_item.dart';
+import 'package:gocafein_test/widget/error_message_build.dart';
 import 'package:gocafein_test/provider/provider.dart';
 import 'package:gocafein_test/model/models.dart';
 
@@ -54,9 +55,7 @@ class MovieDetailScreen extends HookConsumerWidget {
                     ),
                   ],
                 ),
-                error: (e, s) => const Center(
-                  child: Text('로딩 중 에러가 발생했습니다'),
-                ),
+                error: (e, s) => ErrorMessageBuild(movieModel.Title ?? ''),
                 loading: () => const Center(
                   child: CircularProgressIndicator.adaptive(),
                 ),
