@@ -1,22 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:gocafein_test/model/models.dart';
 
+//영화의 목록을 검색하고 저장합니다.
 class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
   MovieListNotifier() : super(const AsyncValue.data(null));
 
   Future<void> fetchMovies(String keyword, int page) async {
     final currentState = state;
     final currentMovies = currentState.value ?? [];
-
-    if (page == 1) {
-      state = const AsyncValue.loading();
-    } else {
-      state = AsyncValue.data(currentMovies);
-    }
+    state = AsyncValue.data(currentMovies);
 
     final url = 'https://www.omdbapi.com/?apikey=${dotenv.get('OMDb_key')}&s=$keyword&page=$page&type=movie';
 
@@ -25,13 +21,15 @@ class MovieListNotifier extends StateNotifier<AsyncValue<List<MovieModel>?>> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final movieResponse = MovieResponse.fromJson(data);
+        if (page == 1) {
+          state = AsyncValue.data(movieResponse.Search);
+        } else {
+          final updatedMovies = List<MovieModel>.from(currentMovies)
+            ..addAll(movieResponse.Search);
+          print('updatedMovies ${updatedMovies.length}');
+          state = AsyncValue.data(updatedMovies);
+        }
 
-        final updatedMovies = List<MovieModel>.from(currentMovies)
-          ..addAll(movieResponse.Search);
-
-        print('updatedMovies ${updatedMovies.length}');
-
-        state = AsyncValue.data(updatedMovies);
       } else {
         state = AsyncValue.error('Failed to load movies', StackTrace.current);
       }
@@ -45,6 +43,7 @@ final movieProvider = StateNotifierProvider<MovieListNotifier, AsyncValue<List<M
   return MovieListNotifier();
 });
 
+//영화의 상세 정보를 검색하고 저장합니다.
 class MovieDetailNotifier extends StateNotifier<AsyncValue<MovieModel?>> {
   MovieDetailNotifier() : super(const AsyncValue.data(null));
 
@@ -74,32 +73,3 @@ class MovieDetailNotifier extends StateNotifier<AsyncValue<MovieModel?>> {
 final movieDetailProvider = StateNotifierProvider<MovieDetailNotifier, AsyncValue<MovieModel?>>((ref) {
   return MovieDetailNotifier();
 });
-
-@immutable
-class MovieState {
-  final List<MovieModel>? movies;
-  final MovieModel? selectedMovie;
-  final bool isLoading;
-  final String? errorMessage;
-
-  MovieState({
-    this.movies,
-    this.selectedMovie,
-    this.isLoading = false,
-    this.errorMessage,
-  });
-
-  MovieState copyWith({
-    List<MovieModel>? movies,
-    MovieModel? selectedMovie,
-    bool? isLoading,
-    String? errorMessage,
-  }) {
-    return MovieState(
-      movies: movies ?? this.movies,
-      selectedMovie: selectedMovie ?? this.selectedMovie,
-      isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-}

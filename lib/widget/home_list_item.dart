@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,13 +13,12 @@ class MovieItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
-    return GestureDetector(
+    return InkWell(
       onTap: () async {
         ref.read(movieDetailProvider.notifier).fetchMovieDetail(movieModel.imdbID ?? '');
         await Navigator.push(
           context,
-          MaterialPageRoute(
+          CupertinoPageRoute(
             builder: (context) => MovieDetailScreen(movieModel),
           ),
         );
@@ -32,15 +32,19 @@ class MovieItem extends ConsumerWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: movieModel.Poster ?? '',
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const Center(
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator.adaptive(),
+              child: Hero(
+                tag: 'moviePoster_${movieModel.imdbID}',
+                child: CachedNetworkImage(
+                  imageUrl: movieModel.Poster ?? '',
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const Center(
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
                   ),
+                  errorWidget: (context, url, error) => Image.asset('assets/movie.jpg'),
                 ),
               ),
             ),

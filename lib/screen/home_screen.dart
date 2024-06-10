@@ -3,7 +3,7 @@ import 'package:gocafein_test/provider/provider.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:gocafein_test/screen/home_item.dart';
+import 'package:gocafein_test/widget/home_list_item.dart';
 
 class HomeScreen extends HookConsumerWidget {
   static const routeName = '/main';
@@ -13,8 +13,10 @@ class HomeScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final keywordController = useTextEditingController(text: 'star');
     final scrollController = useScrollController();
-    var pageIndex = useState(1);
     final movieState = ref.watch(movieProvider);
+
+    var pageIndex = useState(1);
+    var floatingButton = useState(false);
 
     Future<void> requestData() async {
       Future.microtask(() => ref.read(movieProvider.notifier).fetchMovies(keywordController.text, pageIndex.value));
@@ -24,10 +26,15 @@ class HomeScreen extends HookConsumerWidget {
     useEffect(() {
       requestData();
       scrollController.addListener(() {
-        //스크롤 여부를 판단하여, 스크롤 시작하면 키보드를 내림
         bool isScrolling = scrollController.position.isScrollingNotifier.value;
         if (isScrolling) {
+          floatingButton.value = true;
           FocusScope.of(context).unfocus();
+        }
+
+        bool atTop = scrollController.position.pixels == 0;
+        if (atTop) {
+          floatingButton.value = false;
         }
 
         bool atBottom = scrollController.position.pixels == scrollController.position.maxScrollExtent;
@@ -37,13 +44,14 @@ class HomeScreen extends HookConsumerWidget {
       });
       return () {
         scrollController.removeListener(() {});
+        keywordController.removeListener(() {});
       };
-    }, [scrollController]);
+    }, [scrollController, keywordController]);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'GOCAFEIN: MovieSearch',
+          'GOCAFEIN: Jeon_Joonhwan',
           style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Theme.of(context).primaryColor),
         ),
       ),
@@ -65,7 +73,7 @@ class HomeScreen extends HookConsumerWidget {
                       keyboardType: TextInputType.text,
                       style: const TextStyle(fontSize: 16),
                       onChanged: (text) {
-                        keywordController.text = text;
+                        print(keywordController.text);
                       },
                     ),
                   ),
@@ -74,7 +82,9 @@ class HomeScreen extends HookConsumerWidget {
                     width: 80,
                     child: OutlinedButton(
                       onPressed: () async {
-                        ref.read(movieProvider.notifier).fetchMovies(keywordController.text, 1);
+                        FocusScope.of(context).unfocus();
+                        pageIndex.value = 1;
+                        ref.read(movieProvider.notifier).fetchMovies(keywordController.text, pageIndex.value);
                       },
                       style: Theme.of(context).outlinedButtonTheme.style,
                       child: Text(
@@ -88,17 +98,14 @@ class HomeScreen extends HookConsumerWidget {
               ),
               const SizedBox(height: 8),
               movieState.when(
-                data: (movies) => RefreshIndicator(
-                  onRefresh: requestData,
-                  child: ListView.builder(
-                    primary: false,
-                    shrinkWrap: true,
-                    scrollDirection: Axis.vertical,
-                    itemCount: movies?.length,
-                    itemBuilder: (context, index) {
-                      return MovieItem(movies![index]);
-                    },
-                  ),
+                data: (movies) => ListView.builder(
+                  primary: false,
+                  shrinkWrap: true,
+                  scrollDirection: Axis.vertical,
+                  itemCount: movies?.length,
+                  itemBuilder: (context, index) {
+                    return MovieItem(movies![index]);
+                  },
                 ),
                 error: (e, s) => const Center(
                   child: Text('로딩 중 에러가 발생했습니다'),
@@ -111,6 +118,22 @@ class HomeScreen extends HookConsumerWidget {
           ),
         ),
       ),
+      floatingActionButton: floatingButton.value ? FloatingActionButton.small(
+        onPressed: () {
+          scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOut,
+          );
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        foregroundColor: Theme.of(context).canvasColor,
+        backgroundColor: Theme.of(context).primaryColorDark,
+        child: const Icon(
+          Icons.upload_rounded,
+          size: 32,
+        ),
+      ) : null,
     );
   }
 }

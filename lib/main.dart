@@ -21,7 +21,7 @@ class MyApp extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-        title: 'GoCafein_Movie',
+        title: 'GoCafein_Movie_JoonhwanJeon',
         theme: ThemeData(
           textTheme: const TextTheme(
             titleLarge: TextStyle(
@@ -53,26 +53,6 @@ class MyApp extends HookConsumerWidget {
               seedColor: const Color(0xFF558bcf)
           ),
           useMaterial3: true,
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              elevation: 2,
-              foregroundColor: Colors.white,
-              backgroundColor: const Color(0xFF558bcf),
-              padding: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF558bcf),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
